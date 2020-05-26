@@ -426,6 +426,11 @@ class ContentConnection(BaseConnection):
                                                 **kwargs)
 
     def get_versions(self, path):
+        """
+        Get list of releases from CDN
+        :param path: path, where list of releases is expected
+        :return: the content of release file or empty string
+        """
         handler = "%s/%s" % (self.handler, path)
         result = self.conn.request_get(handler)
 
