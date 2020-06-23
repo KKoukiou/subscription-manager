@@ -136,7 +136,9 @@ class TestProfileManager(unittest.TestCase):
         self.profile_mgr = ProfileManager()
         self.profile_mgr.current_profile = self.current_profile
 
-    def test_update_check_no_change(self):
+    @patch('subscription_manager.cache.get_supported_resources')
+    def test_update_check_no_change(self, mock_get_supported_resources):
+        mock_get_supported_resources.return_value = ['packages']
         uuid = 'FAKEUUID'
         uep = Mock()
         uep.updatePackageProfile = Mock()
@@ -148,7 +150,9 @@ class TestProfileManager(unittest.TestCase):
         self.assertEqual(0, uep.updatePackageProfile.call_count)
         self.assertEqual(0, self.profile_mgr.write_cache.call_count)
 
-    def test_update_check_has_changed(self):
+    @patch('subscription_manager.cache.get_supported_resources')
+    def test_update_check_has_changed(self, mock_get_supported_resources):
+        mock_get_supported_resources.return_value = ['packages']
         uuid = 'FAKEUUID'
         uep = Mock()
         uep.has_capability = Mock(return_value=False)
@@ -162,7 +166,9 @@ class TestProfileManager(unittest.TestCase):
                 FACT_MATCHER)
         self.assertEqual(1, self.profile_mgr.write_cache.call_count)
 
-    def test_combined_profile_update_check_has_changed(self):
+    @patch('subscription_manager.cache.get_supported_resources')
+    def test_combined_profile_update_check_has_changed(self, mock_get_supported_resources):
+        mock_get_supported_resources.return_value = ["packages"]
         uuid = 'FAKEUUID'
         uep = Mock()
         uep.has_capability = Mock(return_value=True)
@@ -176,10 +182,12 @@ class TestProfileManager(unittest.TestCase):
                 FACT_MATCHER)
         self.assertEqual(1, self.profile_mgr.write_cache.call_count)
 
-    def test_update_check_packages_not_supported(self):
+    @patch('subscription_manager.cache.get_supported_resources')
+    def test_update_check_packages_not_supported(self, mock_get_supported_resources):
+        # support anything else but not 'packages'
+        mock_get_supported_resources.return_value = ['foo', 'bar']
         uuid = 'FAKEUUID'
         uep = Mock()
-        uep.supports_resource = Mock(return_value=False)
         uep.updatePackageProfile = Mock()
         self.profile_mgr.has_changed = Mock(return_value=True)
         self.profile_mgr.write_cache = Mock()
@@ -187,10 +195,12 @@ class TestProfileManager(unittest.TestCase):
         self.profile_mgr.update_check(uep, uuid)
 
         self.assertEqual(0, uep.updatePackageProfile.call_count)
-        uep.supports_resource.assert_called_with('packages')
+        mock_get_supported_resources.assert_called_once()
         self.assertEqual(0, self.profile_mgr.write_cache.call_count)
 
-    def test_update_check_packages_disabled(self):
+    @patch('subscription_manager.cache.get_supported_resources')
+    def test_update_check_packages_disabled(self, mock_get_supported_resources):
+        mock_get_supported_resources.return_value = ['packages']
         uuid = 'FAKEUUID'
         uep = Mock()
         self.profile_mgr.report_package_profile = 0
@@ -201,7 +211,7 @@ class TestProfileManager(unittest.TestCase):
         self.profile_mgr.update_check(uep, uuid)
 
         self.assertEqual(0, uep.updatePackageProfile.call_count)
-        uep.supports_resource.assert_called_with('packages')
+        mock_get_supported_resources.assert_called_once()
         self.assertEqual(0, self.profile_mgr.write_cache.call_count)
 
     def test_report_package_profile_environment_variable(self):
@@ -237,7 +247,9 @@ class TestProfileManager(unittest.TestCase):
                 conf.__getitem__.return_value.get_int.return_value = 0
                 self.assertFalse(self.profile_mgr.profile_reporting_enabled())
 
-    def test_update_check_error_uploading(self):
+    @patch('subscription_manager.cache.get_supported_resources')
+    def test_update_check_error_uploading(self, mock_get_supported_resources):
+        mock_get_supported_resources.return_value = ['packages']
         uuid = 'FAKEUUID'
         uep = Mock()
         uep.has_capability = Mock(return_value=False)
@@ -252,7 +264,9 @@ class TestProfileManager(unittest.TestCase):
                 FACT_MATCHER)
         self.assertEqual(0, self.profile_mgr.write_cache.call_count)
 
-    def test_combined_profile_update_check_error_uploading(self):
+    @patch('subscription_manager.cache.get_supported_resources')
+    def test_combined_profile_update_check_error_uploading(self, mock_get_supported_resources):
+        mock_get_supported_resources.return_value = ['packages']
         uuid = 'FAKEUUID'
         uep = Mock()
         uep.has_capability = Mock(return_value=True)
@@ -302,7 +316,9 @@ class TestProfileManager(unittest.TestCase):
         self.assertTrue(self.profile_mgr.has_changed())
         self.profile_mgr._read_cache.assert_called_with()
 
-    def test_update_check_consumer_uuid_none(self):
+    @patch('subscription_manager.cache.get_supported_resources')
+    def test_update_check_consumer_uuid_none(self, mock_get_supported_resources):
+        mock_get_supported_resources.return_value = ['packages']
         uuid = None
         uep = Mock()
 

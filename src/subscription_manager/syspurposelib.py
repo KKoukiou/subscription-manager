@@ -131,6 +131,39 @@ def write_syspurpose(values):
     return True
 
 
+def post_process_received_data(data):
+    """
+    Try to solve conflicts in keys
+     - Server returns key "roles", but it should be "role"
+     - Server returns key "support_level", but service_level_agreement is used in syspurpose.json
+    :return: modified dictionary
+    """
+    if 'systemPurposeAttributes' in data:
+        # Fix
+        if 'roles' in data['systemPurposeAttributes']:
+            data['systemPurposeAttributes']['role'] = data['systemPurposeAttributes']['roles']
+            del data['systemPurposeAttributes']['roles']
+        if 'support_level' in data['systemPurposeAttributes']:
+            data['systemPurposeAttributes']['service_level_agreement'] = data['systemPurposeAttributes']['support_level']
+            del data['systemPurposeAttributes']['support_level']
+    return data
+
+
+def get_syspurpose_valid_fields(uep=None, identity=None):
+    """
+    Try to get valid syspurpose fields provided by candlepin server
+    :param uep: connection of candlepin server
+    :param identity: current identity of registered system
+    :return: dictionary with valid fields
+    """
+    valid_fields = {}
+    cache = inj.require(inj.SYSPURPOSE_VALID_FIELDS_CACHE)
+    syspurpose_valid_fields = cache.read_data(uep, identity)
+    if 'systemPurposeAttributes' in syspurpose_valid_fields:
+        valid_fields = syspurpose_valid_fields['systemPurposeAttributes']
+    return valid_fields
+
+
 class SyspurposeSyncActionInvoker(certlib.BaseActionInvoker):
     """
     Used by rhsmcertd to sync the syspurpose values locally with those from the Server.
